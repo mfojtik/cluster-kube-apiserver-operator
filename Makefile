@@ -1,5 +1,5 @@
 GOFLAGS :=
-DOCKER_ORG ?= $(USER)
+DOCKER_ORG ?= openshift
 
 all build:
 	go build $(GOFLAGS) ./cmd/cluster-kube-apiserver-operator
@@ -27,7 +27,7 @@ endif
 .PHONY: test-unit
 
 images:
-	imagebuilder -f Dockerfile -t openshift/origin-cluster-kube-apiserver-operator .
+	imagebuilder -f Dockerfile -t $(DOCKER_ORG)/origin-cluster-kube-apiserver-operator .
 .PHONY: images
 
 clean:
@@ -45,7 +45,6 @@ origin-release:
 	@echo
 	@echo "To install:"
 	@echo
-	@echo "  make images"
-	@echo "  docker tag openshift/origin-cluster-kube-apiserver-operator $(DOCKER_ORG)/origin-cluster-kube-apiserver-operator"
+	@echo "  DOCKER_ORG=$(DOCKER_ORG) make images"
 	@echo "  docker push $(DOCKER_ORG)/origin-cluster-kube-apiserver-operator"
 	@echo "  OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=docker.io/$(DOCKER_ORG)/origin-release:latest bin/openshift-install cluster --log-level=debug"
