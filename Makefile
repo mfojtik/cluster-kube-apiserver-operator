@@ -34,9 +34,13 @@ clean:
 	$(RM) ./cluster-kube-apiserver-operator
 .PHONY: clean
 
+, := ,
+IMAGES ?= cluster-kube-apiserver-operator
+QUOTED_IMAGES=\"$(subst $(,),\"$(,)\",$(IMAGES))\"
+
 origin-release:
 	docker pull registry.svc.ci.openshift.org/openshift/origin-release:v4.0
-	bash -c 'docker build -f <(sed "s/DOCKER_ORG/$(DOCKER_ORG)/" Dockerfile-origin-release) -t "$(DOCKER_ORG)/origin-release:latest" .'
+	bash -c 'docker build -f <(sed "s/DOCKER_ORG/$(DOCKER_ORG)/g;s/IMAGES/$(QUOTED_IMAGES)/g" Dockerfile-origin-release) -t "$(DOCKER_ORG)/origin-release:latest" .'
 	docker push $(DOCKER_ORG)/origin-release:latest
 	@echo
 	@echo "To install:"
