@@ -1,5 +1,5 @@
 GOFLAGS :=
-DOCKER_ORG ?= openshift
+IMAGE_REPOSITORY_NAME ?= openshift
 
 all build:
 	go build $(GOFLAGS) ./cmd/cluster-kube-apiserver-operator
@@ -27,7 +27,7 @@ endif
 .PHONY: test-unit
 
 images:
-	imagebuilder -f Dockerfile -t $(DOCKER_ORG)/origin-cluster-kube-apiserver-operator .
+	imagebuilder -f Dockerfile -t $(IMAGE_REPOSITORY_NAME)/origin-cluster-kube-apiserver-operator .
 .PHONY: images
 
 clean:
@@ -38,13 +38,15 @@ clean:
 IMAGES ?= cluster-kube-apiserver-operator
 QUOTED_IMAGES=\"$(subst $(,),\"$(,)\",$(IMAGES))\"
 
+# Rebuild the origin-release:v4.0 image using the local images.
+# Usage:
+# $ IMAGES=cluster-kube-apiserver-operator,cluster-kube-controller-manager-operator,cluster-kube-scheduler-operator IMAGE_REPOSITORY_NAME=foo make origin-release
 origin-release:
 	docker pull registry.svc.ci.openshift.org/openshift/origin-release:v4.0
-	bash -c 'docker build -f <(sed "s/DOCKER_ORG/$(DOCKER_ORG)/g;s/IMAGES/$(QUOTED_IMAGES)/g" hack/lib/Dockerfile-origin-release) -t "$(DOCKER_ORG)/origin-release:latest" hack'
-	docker push $(DOCKER_ORG)/origin-release:latest
+	bash -c 'imagebuilder -f <(sed "s/IMAGE_REPOSITORY_NAME/$(IMAGE_REPOSITORY_NAME)/g;s/IMAGES/$(QUOTED_IMAGES)/g" hack/lib/Dockerfile-origin-release) -t "$(IMAGE_REPOSITORY_NAME)/origin-release:latest" hack'
 	@echo
 	@echo "To install:"
 	@echo
-	@echo "  DOCKER_ORG=$(DOCKER_ORG) make images"
-	@echo "  docker push $(DOCKER_ORG)/origin-cluster-kube-apiserver-operator"
-	@echo "  OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=docker.io/$(DOCKER_ORG)/origin-release:latest bin/openshift-install cluster --log-level=debug"
+	@echo "  IMAGE_REPOSITORY_NAME=$(IMAGE_REPOSITORY_NAME) make images"
+	@echo "  docker push $(IMAGE_REPOSITORY_NAME)/origin-cluster-kube-apiserver-operator"
+	@echo "  OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE=docker.io/$(IMAGE_REPOSITORY_NAME)/origin-release:latest bin/openshift-install cluster --log-level=debug"
